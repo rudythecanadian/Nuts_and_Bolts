@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fastener Generator - Bolts, Nuts & Washers</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #4fc3f7;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #90a4ae;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #4fc3f7;
+            border-radius: 2px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #b0bec5;
+            font-size: 0.9rem;
+        }
+
+        select, input[type="number"] {
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        .quantity-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(79, 195, 247, 0.2);
+            color: #4fc3f7;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .qty-btn:hover {
+            background: rgba(79, 195, 247, 0.4);
+        }
+
+        .qty-value {
+            width: 50px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .component-preview {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .component-item {
+            text-align: center;
+        }
+
+        .component-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .component-label {
+            font-size: 0.9rem;
+            color: #90a4ae;
+        }
+
+        .component-qty {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+            border: none;
+            border-radius: 12px;
+            color: #1a1a2e;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 195, 247, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .result-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .result-icon {
+            font-size: 1.5rem;
+        }
+
+        .result-name {
+            font-weight: 500;
+        }
+
+        .download-btn {
+            padding: 8px 20px;
+            background: #4caf50;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .download-btn:hover {
+            background: #66bb6a;
+        }
+
+        .error {
+            padding: 16px;
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            border-radius: 8px;
+            color: #ef5350;
+        }
+
+        .size-info {
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #90a4ae;
+        }
+
+        .size-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .size-info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .size-info-label {
+            font-size: 0.75rem;
+            color: #78909c;
+        }
+
+        .size-info-value {
+            color: #b0bec5;
+            font-weight: 500;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: transparent;
+            color: #90a4ae;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .tab:hover {
+            border-color: #4fc3f7;
+            color: #4fc3f7;
+        }
+
+        .tab.active {
+            background: rgba(79, 195, 247, 0.2);
+            border-color: #4fc3f7;
+            color: #4fc3f7;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #78909c;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #4fc3f7;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Fastener Generator</h1>
+            <p class="subtitle">Generate 3D-printable bolts, nuts, and washers (STL in mm)</p>
+        </header>
+
+        <div class="card">
+            <div class="card-title">Standard & Size</div>
+
+            <div class="tabs">
+                <button class="tab active" data-standard="metric">Metric (ISO)</button>
+                <button class="tab" data-standard="ansi">ANSI (Imperial)</button>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="size">Bolt Size</label>
+                    <select id="size"></select>
+                </div>
+                <div class="form-group">
+                    <label for="length" id="lengthLabel">Thread Length (mm)</label>
+                    <input type="number" id="length" value="20" min="5" max="200" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="headType">Head Type</label>
+                    <select id="headType">
+                        <option value="hex">Hex</option>
+                        <option value="socket">Socket Cap</option>
+                        <option value="button">Button Head</option>
+                        <option value="countersunk">Countersunk</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="sizeInfo" class="size-info"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Component Quantities</div>
+
+            <div class="form-row">
+                <div class="quantity-group">
+                    <label>Bolts</label>
+                    <div class="quantity-controls">
+                        <button class="qty-btn" data-target="boltQty" data-action="dec">-</button>
+                        <span class="qty-value" id="boltQty">1</span>
+                        <button class="qty-btn" data-target="boltQty" data-action="inc">+</button>
+                    </div>
+                </div>
+                <div class="quantity-group">
+                    <label>Washers</label>
+                    <div class="quantity-controls">
+                        <button class="qty-btn" data-target="washerQty" data-action="dec">-</button>
+                        <span class="qty-value" id="washerQty">1</span>
+                        <button class="qty-btn" data-target="washerQty" data-action="inc">+</button>
+                    </div>
+                </div>
+                <div class="quantity-group">
+                    <label>Nuts</label>
+                    <div class="quantity-controls">
+                        <button class="qty-btn" data-target="nutQty" data-action="dec">-</button>
+                        <span class="qty-value" id="nutQty">1</span>
+                        <button class="qty-btn" data-target="nutQty" data-action="inc">+</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="nutType">Nut Type</label>
+                    <select id="nutType">
+                        <option value="normal">Standard Hex</option>
+                        <option value="wingnut">Wing Nut</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="component-preview">
+                <div class="component-item">
+                    <div class="component-icon">🔩</div>
+                    <div class="component-label">Bolts</div>
+                    <div class="component-qty" id="boltPreview">1</div>
+                </div>
+                <div class="component-item">
+                    <div class="component-icon">⚙️</div>
+                    <div class="component-label">Washers</div>
+                    <div class="component-qty" id="washerPreview">1</div>
+                </div>
+                <div class="component-item">
+                    <div class="component-icon">🔧</div>
+                    <div class="component-label">Nuts</div>
+                    <div class="component-qty" id="nutPreview">1</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="generate-btn" id="generateBtn">
+            <span class="spinner" id="spinner"></span>
+            <span id="btnText">Generate STL Files</span>
+        </button>
+
+        <div class="results" id="results"></div>
+
+        <div class="card" id="libraryCard">
+            <div class="card-title">Library (Pre-generated Files)</div>
+            <p style="color: #90a4ae; margin-bottom: 15px; font-size: 0.9rem;">
+                Previously generated files are cached for instant download. First generation of a new size may take 1-2 minutes.
+            </p>
+            <div id="libraryList" style="max-height: 400px; overflow-y: auto;"></div>
+            <button class="generate-btn" id="refreshLibrary" style="margin-top: 15px; background: linear-gradient(135deg, #78909c 0%, #607d8b 100%);">
+                Refresh Library
+            </button>
+        </div>
+
+        <footer>
+            Based on <a href="https://www.thingiverse.com/thing:193647" target="_blank">Nut Job</a> by Mike Thompson
+            <br>Units: millimeters (mm) - Ready for 3D printing
+        </footer>
+    </div>
+
+    <script>
+        let boltSizes = {};
+        let currentStandard = 'metric';
+        const MM_PER_INCH = 25.4;
+
+        // Fetch bolt sizes on load
+        async function loadSizes() {
+            const response = await fetch('/api/sizes');
+            boltSizes = await response.json();
+            updateSizeDropdown();
+        }
+
+        function mmToInch(mm) {
+            return (mm / MM_PER_INCH).toFixed(3);
+        }
+
+        function inchToMm(inch) {
+            return inch * MM_PER_INCH;
+        }
+
+        function formatDimension(mm) {
+            if (currentStandard === 'ansi') {
+                return `${mmToInch(mm)}″`;
+            }
+            return `${mm} mm`;
+        }
+
+        function updateLengthInput() {
+            const lengthLabel = document.getElementById('lengthLabel');
+            const lengthInput = document.getElementById('length');
+
+            if (currentStandard === 'ansi') {
+                lengthLabel.textContent = 'Thread Length (inches)';
+                // Convert current mm value to inches for display
+                const currentMm = parseFloat(lengthInput.value);
+                lengthInput.value = (currentMm / MM_PER_INCH).toFixed(2);
+                lengthInput.step = '0.125';
+                lengthInput.min = '0.25';
+                lengthInput.max = '8';
+            } else {
+                lengthLabel.textContent = 'Thread Length (mm)';
+                // Convert current inch value to mm for display
+                const currentInch = parseFloat(lengthInput.value);
+                if (currentInch < 10) { // Likely in inches, convert to mm
+                    lengthInput.value = Math.round(currentInch * MM_PER_INCH);
+                }
+                lengthInput.step = '1';
+                lengthInput.min = '5';
+                lengthInput.max = '200';
+            }
+        }
+
+        function updateSizeDropdown() {
+            const sizeSelect = document.getElementById('size');
+            const sizes = Object.keys(boltSizes[currentStandard]);
+
+            sizeSelect.innerHTML = sizes.map(size =>
+                `<option value="${size}">${size}</option>`
+            ).join('');
+
+            updateLengthInput();
+            updateSizeInfo();
+        }
+
+        function updateSizeInfo() {
+            const size = document.getElementById('size').value;
+            const data = boltSizes[currentStandard]?.[size];
+
+            if (!data) return;
+
+            const info = document.getElementById('sizeInfo');
+            const unit = currentStandard === 'ansi' ? 'inch' : 'mm';
+
+            info.innerHTML = `
+                <strong>Selected: ${size}</strong>
+                <div class="size-info-grid">
+                    <div class="size-info-item">
+                        <span class="size-info-label">Thread Diameter</span>
+                        <span class="size-info-value">${formatDimension(data.diameter)}</span>
+                    </div>
+                    <div class="size-info-item">
+                        <span class="size-info-label">Thread Pitch</span>
+                        <span class="size-info-value">${currentStandard === 'ansi' ? (1/data.pitch).toFixed(0) + ' TPI' : data.pitch + ' mm'}</span>
+                    </div>
+                    <div class="size-info-item">
+                        <span class="size-info-label">Head Diameter</span>
+                        <span class="size-info-value">${formatDimension(data.headDiameter)}</span>
+                    </div>
+                    <div class="size-info-item">
+                        <span class="size-info-label">Nut Diameter</span>
+                        <span class="size-info-value">${formatDimension(data.nutDiameter)}</span>
+                    </div>
+                    <div class="size-info-item">
+                        <span class="size-info-label">Washer OD</span>
+                        <span class="size-info-value">${formatDimension(data.washerOD)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentStandard = tab.dataset.standard;
+                updateSizeDropdown();
+            });
+        });
+
+        // Size change
+        document.getElementById('size').addEventListener('change', updateSizeInfo);
+
+        // Quantity controls
+        document.querySelectorAll('.qty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.target);
+                let value = parseInt(target.textContent);
+
+                if (btn.dataset.action === 'inc' && value < 10) {
+                    value++;
+                } else if (btn.dataset.action === 'dec' && value > 0) {
+                    value--;
+                }
+
+                target.textContent = value;
+
+                // Update preview
+                const previewId = btn.dataset.target.replace('Qty', 'Preview');
+                document.getElementById(previewId).textContent = value;
+            });
+        });
+
+        // Generate STL
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('generateBtn');
+            const spinner = document.getElementById('spinner');
+            const btnText = document.getElementById('btnText');
+            const results = document.getElementById('results');
+
+            const boltQty = parseInt(document.getElementById('boltQty').textContent);
+            const washerQty = parseInt(document.getElementById('washerQty').textContent);
+            const nutQty = parseInt(document.getElementById('nutQty').textContent);
+
+            if (boltQty === 0 && washerQty === 0 && nutQty === 0) {
+                results.innerHTML = '<div class="error">Please select at least one component to generate.</div>';
+                return;
+            }
+
+            btn.disabled = true;
+            spinner.style.display = 'block';
+            btnText.textContent = 'Generating...';
+            results.innerHTML = '';
+
+            try {
+                // Get length and convert to mm if ANSI (input is in inches)
+                let lengthMm = parseFloat(document.getElementById('length').value);
+                if (currentStandard === 'ansi') {
+                    lengthMm = Math.round(lengthMm * MM_PER_INCH);
+                }
+
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        standard: currentStandard,
+                        size: document.getElementById('size').value,
+                        length: lengthMm,
+                        headType: document.getElementById('headType').value,
+                        boltQty,
+                        washerQty,
+                        nutQty,
+                        nutType: document.getElementById('nutType').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    results.innerHTML = `<div class="error">${data.error}</div>`;
+                } else {
+                    const icons = { bolt: '🔩', washer: '⚙️', nut: '🔧' };
+                    results.innerHTML = data.files.map(file => `
+                        <div class="result-item">
+                            <div class="result-info">
+                                <span class="result-icon">${icons[file.type]}</span>
+                                <span class="result-name">${file.name}</span>
+                            </div>
+                            <a href="/output/${file.name}" download class="download-btn">Download STL</a>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                results.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            }
+
+            btn.disabled = false;
+            spinner.style.display = 'none';
+            btnText.textContent = 'Generate STL Files';
+        });
+
+        // Load library
+        async function loadLibrary() {
+            const libraryList = document.getElementById('libraryList');
+            libraryList.innerHTML = '<div style="color: #90a4ae;">Loading...</div>';
+
+            try {
+                const response = await fetch('/api/library');
+                const data = await response.json();
+
+                if (data.files.length === 0) {
+                    libraryList.innerHTML = '<div style="color: #90a4ae;">No files in library yet. Generate some fasteners to populate the library.</div>';
+                    return;
+                }
+
+                // Group by standard and type
+                const grouped = {};
+                data.files.forEach(file => {
+                    const key = `${file.standard.toUpperCase()} ${file.type}s`;
+                    if (!grouped[key]) grouped[key] = [];
+                    grouped[key].push(file);
+                });
+
+                let html = '';
+                for (const [group, files] of Object.entries(grouped)) {
+                    html += `<div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; color: #4fc3f7; margin-bottom: 8px;">${group}</div>`;
+
+                    files.forEach(file => {
+                        let desc = file.size;
+                        if (file.length) desc += ` x ${file.length}mm`;
+                        if (file.headType) desc += ` (${file.headType})`;
+                        if (file.nutType && file.nutType !== 'normal') desc += ` (${file.nutType})`;
+
+                        html += `
+                        <div class="result-item" style="background: rgba(79, 195, 247, 0.1); border-color: rgba(79, 195, 247, 0.3);">
+                            <div class="result-info">
+                                <span class="result-icon">${file.type === 'bolt' ? '🔩' : file.type === 'washer' ? '⚙️' : '🔧'}</span>
+                                <span class="result-name">${desc}</span>
+                                <span style="color: #78909c; font-size: 0.8rem; margin-left: 10px;">${file.sizeMB} MB</span>
+                            </div>
+                            <a href="/library/${file.filename}" download class="download-btn">Download</a>
+                        </div>`;
+                    });
+                    html += '</div>';
+                }
+
+                libraryList.innerHTML = html;
+            } catch (err) {
+                libraryList.innerHTML = `<div style="color: #ef5350;">Error loading library: ${err.message}</div>`;
+            }
+        }
+
+        document.getElementById('refreshLibrary').addEventListener('click', loadLibrary);
+
+        // Initialize
+        loadSizes();
+        loadLibrary();
+    </script>
+</body>
+</html>
